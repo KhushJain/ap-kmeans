@@ -1,21 +1,18 @@
 import React, { useRef, useEffect } from 'react';
 import { select, axisBottom, scaleLinear, axisLeft,  extent } from 'd3';
 import * as d3 from 'd3'
-
 const DGraph = ({data}) => {
 
-    let xValue = data.map((d, i) => (d.coordinates.x))
-    let yValue = data.map((d, i) => (d.coordinates.y))
     const svgRef = useRef(); 
     const divRef = useRef();
     const width = 600;
     const height = 600;
     const margin = { top: 50, bottom: 50, left: 50, right: 50 };
-
+    
 
     useEffect(() => {
 
-        
+        let transform;
         const xScale = scaleLinear()
                       .domain(extent(data.map(d => d.coordinates.x)))
                       .range([margin.left, width - margin.right])
@@ -26,12 +23,22 @@ const DGraph = ({data}) => {
                       .range([height - margin.bottom, margin.top])
                       //.nice()
 
+        const delaunay = d3.Delaunay.from(data, d => xScale(d.coordinates.x), d => yScale(d.coordinates.y));
         
         const xAxis = axisBottom(xScale).tickValues(xScale.ticks(10));
         const yAxis = axisLeft(yScale).tickValues(yScale.ticks(10));
-        
+       
+
         const svg = select(svgRef.current);
         const div = select(divRef.current);
+
+        const coordinate = svg.select(".graph").selectAll(".coordinate");
+
+        const zoom = d3.zoom().on("zoom", e => {  
+            svg.selectAll(".graph").attr("transform", (transform = e.transform));
+            svg.selectAll(".graph").style("stroke-width", 3 / Math.sqrt(transform.k));
+            svg.selectAll(".graph").selectAll(".coordinate").attr("r", 3 / Math.sqrt(transform.k));
+          });
 
         div.select("tooltip")
         .style("opacity", 0);
@@ -77,7 +84,18 @@ const DGraph = ({data}) => {
         .attr("x", -margin.top + 10)
         .text("Y Value");
 
-        svg
+        svg.call(zoom)
+        .call(zoom.transform, d3.zoomIdentity)
+        .on("pointermove", event => {
+            const p = transform.invert(d3.pointer(event));
+            const i = delaunay.find(...p);
+            coordinate.classed("highlighted", (_, j) => i === j);
+            d3.select(coordinate.nodes()[i]).raise();
+          }).node();
+          
+        svg.select(".graph").remove();
+        
+        svg.append("g").attr("class", "graph")
         .selectAll(".coordinate")
         .data(data)
         .join('circle')
@@ -87,46 +105,36 @@ const DGraph = ({data}) => {
         .attr("r", 3)
         .attr("fill", "#00008B")
         .on("mouseover", function(d, i) {
-            d3.select(this)
-            .transition()
-            .duration('100')
-            .attr("r", 5);
+            div.transition()
+            .duration(100)
+            .style("opacity", 1);
 
-        div.transition()
-          .duration(100)
-          .style("opacity", 1);
+            div.selectAll("text").remove();
+            div.selectAll("br").remove();
+            div
+            .append("text")
+            .attr("class", "content")
+            .attr("font-size", "180%")
+            .attr("font-family", "Times New Roman")
+            .text("Population Equality = " + i.data["Population Equality"])
 
-        div.selectAll("text").remove();
-        div.selectAll("br").remove();
-        div
-        .append("text")
-        .attr("class", "content")
-        .attr("font-size", "180%")
-        .attr("font-family", "Times New Roman")
-        .text("Population Equality = " + i.data["Population Equality"])
+            div.append("br")
 
-        div.append("br")
-
-        div
-        .append("text")
-        .attr("class", "content2")
-        .attr("font-size", "180%")
-        .attr("font-family", "Times New Roman")
-        .text("Polsby Popper " + i.data["Polsby Popper"])
-    
-    
-    })
+            div
+            .append("text")
+            .attr("class", "content2")
+            .attr("font-size", "180%")
+            .attr("font-family", "Times New Roman")
+            .text("Polsby Popper " + i.data["Polsby Popper"])
+         })
 
         .on("mouseout", function(d) {
-            d3.select(this)
-            .transition()
+            div.transition()
             .duration('200')
-            .attr("r", 3);
-
-        div.transition()
-          .duration('200')
-          .style("opacity", 0);
+            .style("opacity", 0);
         });
+        
+        
 
         svg
           .select(".y-axis")
@@ -151,7 +159,7 @@ const DGraph = ({data}) => {
         .attr("font-family", "Serif")
         .text("Scatter Plotttt");
 
-    }, [data, xValue, yValue])
+    }, [])
 
 
 
@@ -162,7 +170,7 @@ const DGraph = ({data}) => {
                 <g className = "x-axis" />
                 <g className = "y-axis" />
             </svg>
-           <div ref={divRef} class="tooltip"></div>
+           <div ref={divRef} className="tooltip"></div>
         </div>
     )
 };
