@@ -3,6 +3,7 @@ import axios from 'axios';
 import { kmeans } from "ml-kmeans";
 import Graph from './components/Graph';
 import ClusterPlot from './components/ClusterPlot';
+import DGraph from './components/DGraph';
 //import RawPositioning from './RawPositioning.js'
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
@@ -23,6 +24,7 @@ export default function AppSTD() {
 			
 			//kmeans clustering
 			const { clusters } = kmeans(temp, 10);
+			console.log(kmeans(temp, 10));
 
 			//adding cluster number to each data point
 			data.forEach((d, i) => {
@@ -91,6 +93,8 @@ export default function AppSTD() {
 			</div> */}
 			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
 			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
+			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} />}
+
 		</div >
 	);
 }
