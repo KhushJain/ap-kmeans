@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { kmeans } from "ml-kmeans";
+import Graph from './components/Graph';
 //import RawPositioning from './RawPositioning.js'
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
@@ -8,12 +9,13 @@ import { kmeans } from "ml-kmeans";
 export default function AppSTD() {
 
 	const [rawData, setRawData] = useState([])
-	const [data, setData] = useState({});
+	const [processedData, setProcessedData] = useState([])
 	const [hoverKey, setHoverKey] = useState(-1)
-	const [X, setX] = useState([])
+	const [coordinates, setCoordinates] = useState([]) 
 	const loadData = async () => {
 			let res = await axios('./Data/postmapping.json')
 			let data = res.data.map((d, i) => ({key: i, ...d}))
+			setRawData(data)
 
 			//getting all the values of x and y coordinates
 			const temp = data.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
@@ -25,11 +27,8 @@ export default function AppSTD() {
 			data.forEach((d, i) => {
 				d.cluster = clusters[i]
 			})
-
-			console.log(data)
-			console.log(clusters)
-			setRawData(data)
-			setX(temp)
+			setProcessedData(data)
+			setCoordinates(temp)
 		}
 	let labelMapping = {
 		'Democratic Seat Share': 'dem seat',
@@ -89,7 +88,7 @@ export default function AppSTD() {
 						showHSV={true} />, [data, hoverKey])}
 				</div>
 			</div> */}
-			Hello
+			{/* {rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />} */}
 		</div >
 	);
 }
