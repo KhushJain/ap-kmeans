@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { kmeans } from "ml-kmeans";
 //import RawPositioning from './RawPositioning.js'
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
@@ -15,8 +16,18 @@ export default function AppSTD() {
 			let data = res.data.map((d, i) => ({key: i, ...d}))
 
 			//getting all the values of x and y coordinates
-			const temp = data.map((d, i) => ({key: i, x: d.coordinates.x, y: d.coordinates.y}))
+			const temp = data.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
 			
+			//kmeans clustering
+			const { clusters } = kmeans(temp, 10);
+
+			//adding cluster number to each data point
+			data.forEach((d, i) => {
+				d.cluster = clusters[i]
+			})
+
+			console.log(data)
+			console.log(clusters)
 			setRawData(data)
 			setX(temp)
 		}
