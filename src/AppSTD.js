@@ -4,6 +4,7 @@ import { kmeans } from "ml-kmeans";
 import Graph from './components/Graph';
 import ClusterPlot from './components/ClusterPlot';
 import DGraph from './components/DGraph';
+import DClusterGraph from './components/DClusterGraph';
 //import RawPositioning from './RawPositioning.js'
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
@@ -14,6 +15,7 @@ export default function AppSTD() {
 	const [processedData, setProcessedData] = useState([])
 	const [hoverKey, setHoverKey] = useState(-1)
 	const [coordinates, setCoordinates] = useState([]) 
+	const numberOfClusters = 10
 	const loadData = async () => {
 			let res = await axios('./Data/postmapping.json')
 			let data = res.data.map((d, i) => ({key: i, ...d}))
@@ -24,7 +26,7 @@ export default function AppSTD() {
 			
 			//kmeans clustering
 			const { clusters } = kmeans(temp, 10);
-			console.log(kmeans(temp, 10));
+			console.log(kmeans(temp, numberOfClusters));
 
 			//adding cluster number to each data point
 			data.forEach((d, i) => {
@@ -93,8 +95,8 @@ export default function AppSTD() {
 			</div> */}
 			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
 			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
-			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} />}
-
+			{processedData.length > 0 && <DGraph data={processedData} coordinates={coordinates} />}
+			{processedData.length > 0 && <DClusterGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
 		</div >
 	);
 }
