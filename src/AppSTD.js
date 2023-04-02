@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { kmeans } from "ml-kmeans";
 import Graph from './components/Graph';
+import ClusterPlot from './components/ClusterPlot';
 //import RawPositioning from './RawPositioning.js'
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
@@ -88,7 +89,8 @@ export default function AppSTD() {
 						showHSV={true} />, [data, hoverKey])}
 				</div>
 			</div> */}
-			{/* {rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />} */}
+			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
+			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
 		</div >
 	);
 }

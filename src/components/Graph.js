@@ -18,21 +18,19 @@ export default function Graph({data}) {
             title: 'scatter plot',
             height: 600,
             width: 600,
-            xaxis: {title: 'x', range: [Math.min(...x), Math.max(...x)]},
-            yaxis: {title: 'y', range: [Math.min(...y), Math.max(...y)]},
+            xaxis: {title: 'x'},
+            yaxis: {title: 'y'},
             scattergap: 0.1,
         }
         setValue(plotData)
         setLayout(tempLayout)
 
-        console.log(value === undefined)
+        //console.log(value === undefined)
     }, [setValue])
 
     return (
         <>
-        <p>wr</p>
-       {value !== undefined && layout !== undefined && <Plot data={value} layout={layout} />}
-        
+       {value !== undefined && layout !== undefined && <Plot data={value} layout={layout} />}   
        </>
     )
 }
