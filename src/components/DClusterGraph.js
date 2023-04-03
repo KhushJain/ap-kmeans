@@ -68,6 +68,7 @@ const DGraph = ({ data, numberOfClusters }) => {
         svg.selectAll(".actualYValue").remove();
 
 		// Add the legend items to the legend SVG element
+        legendSvg.selectAll('g').remove();
 		legendSvg
 		.selectAll('g')
 		.data(clusterColors)
@@ -186,7 +187,7 @@ const DGraph = ({ data, numberOfClusters }) => {
                 <g className = "y-axis-2" />
             </svg>
            <div ref={divRef} class="tooltip-2"></div>
-		   <svg ref={legendRef} width={100} height={height} />
+		   <svg ref={legendRef} width={100} height={100} />
         </div>
     )
 };

@@ -31,8 +31,7 @@ export default function ClusterPlot({data}) {
         setValue(plotData)
         setLayout(tempLayout)
 
-        console.log(value === undefined)
-    }, [setValue])
+    }, [data])
 
     return (
         <>

@@ -15,26 +15,26 @@ export default function AppSTD() {
 	const [processedData, setProcessedData] = useState([])
 	const [hoverKey, setHoverKey] = useState(-1)
 	const [coordinates, setCoordinates] = useState([]) 
-	const numberOfClusters = 10
-	const loadData = async () => {
-			let res = await axios('./Data/postmapping.json')
-			let data = res.data.map((d, i) => ({key: i, ...d}))
-			setRawData(data)
+	const [numberOfClusters, setNumberOfClusters] = useState(10) 
 
-			//getting all the values of x and y coordinates
-			const temp = data.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
-			
-			//kmeans clustering
-			const { clusters } = kmeans(temp, 10);
-			console.log(kmeans(temp, numberOfClusters));
+	const handleChange = (e) => {
+		const n = Number(e.target.value)
 
-			//adding cluster number to each data point
-			data.forEach((d, i) => {
-				d.cluster = clusters[i]
-			})
-			setProcessedData(data)
-			setCoordinates(temp)
-		}
+		setNumberOfClusters(n)
+		
+		let coordinatesCopy = [...coordinates]	
+		let rawDataCopy = [...rawData]
+		applyClustering(coordinatesCopy, rawDataCopy, n)
+	}
+
+	const applyClustering = (coordinateCopy, dataCopy , n) => {
+		const { clusters } = kmeans(coordinateCopy, n);
+		dataCopy.forEach((d, i) => {
+			d.cluster = clusters[i]
+		})
+		setProcessedData(dataCopy)
+	}
+
 	let labelMapping = {
 		'Democratic Seat Share': 'dem seat',
 		'Efficiency Gap': 'eff gap',
@@ -53,15 +53,23 @@ export default function AppSTD() {
 
 	useEffect(() => {
 		
-		loadData()
+		const loadData = async () => {
+			let res = await axios('./Data/postmapping.json')
+			let data = res.data.map((d, i) => ({key: i, ...d}))
+			setRawData(data)
+			//getting all the values of x and y coordinates
+			const temp = data.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
+			setCoordinates(temp)
+
+			//kmeans clustering
+			applyClustering(temp, data, 10)
+		}
+
+		loadData().catch(err => console.log(err))
 		
-		//creating variable x with all x and y coordinates
-		//const temp1 = rawData.map((d, i) => [d.x, d.y])
-	
-		//setX(temp)
 	}, [])
 
-
+	
 	// useEffect(() => {
 
 	// 	// Statistical and Regualr require different label Mappings.
@@ -93,10 +101,12 @@ export default function AppSTD() {
 						showHSV={true} />, [data, hoverKey])}
 				</div>
 			</div> */}
+			<label>Clusters</label>
+			<input type="number" id="Cluster" name="Cluster" value={numberOfClusters} onChange = {handleChange}></input>
 			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
 			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
-			{processedData.length > 0 && <DGraph data={processedData} coordinates={coordinates} />}
 			{processedData.length > 0 && <DClusterGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
+			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} />}
 		</div >
 	);
 }
