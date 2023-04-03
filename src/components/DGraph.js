@@ -32,11 +32,12 @@ const DGraph = ({data}) => {
         const svg = select(svgRef.current);
         const div = select(divRef.current);
 
-        const coordinate = svg.select(".graph").selectAll(".coordinate");
 
-        const zoom = d3.zoom().on("zoom", e => {  
+        const zoom = d3.zoom()
+            .extent([[0, 0], [width, height]])
+            .scaleExtent([1, 20])
+            .on("zoom", e => {  
             svg.selectAll(".graph").attr("transform", (transform = e.transform));
-            svg.selectAll(".graph").style("stroke-width", 3 / Math.sqrt(transform.k));
             svg.selectAll(".graph").selectAll(".coordinate").attr("r", 3 / Math.sqrt(transform.k));
           });
 
@@ -47,17 +48,16 @@ const DGraph = ({data}) => {
            .attr('height', height - margin.top - margin.bottom)
            .attr("viewBox", [0, 0, width, height]);
 
-        svg.attr("overflow", "visible");
-        
-        svg
-        .select(".x-axis")
-        .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(xAxis)
+       // svg.attr("overflow", "visible");
+        // svg
+        // .select(".x-axis")
+        // .attr("transform", `translate(0,${height - margin.bottom})`)
+        // .call(xAxis)
 
-        svg
-        .select(".y-axis")
-        .attr("transform", `translate(${margin.left}, 0)`)
-        .call(yAxis)
+        // svg
+        // .select(".y-axis")
+        // .attr("transform", `translate(${margin.left}, 0)`)
+        // .call(yAxis)
 
         svg.selectAll(".actualXValue").remove();
         svg.append("text")
@@ -87,10 +87,10 @@ const DGraph = ({data}) => {
         svg.call(zoom)
         .call(zoom.transform, d3.zoomIdentity)
         .on("pointermove", event => {
-            const p = transform.invert(d3.pointer(event));
-            const i = delaunay.find(...p);
-            coordinate.classed("highlighted", (_, j) => i === j);
-            d3.select(coordinate.nodes()[i]).raise();
+            // const p = transform.invert(d3.pointer(event));
+            // const i = delaunay.find(...p);
+            //svg.selectAll(".graph").select(".coordinate").classed("highlighted", (_, j) => i === j);
+            //svg.selectAll(".graph").select(".coordinate").select(coordinate.nodes()[i]).raise();
           }).node();
           
         svg.select(".graph").remove();
@@ -136,18 +136,18 @@ const DGraph = ({data}) => {
         
         
 
-        svg
-          .select(".y-axis")
-          .selectAll('text')
-          .attr("font-size", "180%")
-          .attr("font-family", "Lucida Console")
+        // svg
+        //   .select(".y-axis")
+        //   .selectAll('text')
+        //   .attr("font-size", "180%")
+        //   .attr("font-family", "Lucida Console")
  
 
-          svg
-          .select(".x-axis")
-          .selectAll('text')
-          .attr("font-size", "180%")
-          .attr("font-family", "Lucida Console")
+        //   svg
+        //   .select(".x-axis")
+        //   .selectAll('text')
+        //   .attr("font-size", "180%")
+        //   .attr("font-family", "Lucida Console")
 
         svg.selectAll(".chartTitle").remove();
         svg.append("text")
