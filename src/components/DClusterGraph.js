@@ -187,7 +187,7 @@ const DGraph = ({ data, numberOfClusters }) => {
                 <g className = "y-axis-2" />
             </svg>
            <div ref={divRef} class="tooltip-2"></div>
-		   <svg ref={legendRef} width={100} height={100} />
+		   <svg ref={legendRef} width={100} height={height - margin.top - margin.bottom-200} />
         </div>
     )
 };
