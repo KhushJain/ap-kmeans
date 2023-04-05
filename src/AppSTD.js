@@ -105,8 +105,8 @@ export default function AppSTD() {
 			<input type="number" id="Cluster" name="Cluster" value={numberOfClusters} onChange = {handleChange}></input>
 			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
 			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
-			{processedData.length > 0 && <DClusterGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
-			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} />}
+			{processedData.length > 0 && <DClusterGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} applyClustering={applyClustering} setNumberOfClusters={setNumberOfClusters} />}
+			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
 		</div >
 	);
 }

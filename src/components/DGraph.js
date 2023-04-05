@@ -1,29 +1,33 @@
-import React, { useRef, useEffect } from 'react';
-import { select, axisBottom, scaleLinear, axisLeft,  extent } from 'd3';
+//to do: create a box outside which it does not show the points
+
+import React, { useState, useRef, useEffect } from 'react';
+import { select, axisBottom, scaleLinear, axisLeft,  extent, max, min } from 'd3';
 import * as d3 from 'd3'
-const DGraph = ({data}) => {
+import randomColor from 'randomcolor';
+import { kmeans } from 'ml-kmeans';
+const DGraph = ({data, numberOfClusters}) => {
 
     const svgRef = useRef(); 
     const divRef = useRef();
     const width = 600;
     const height = 600;
     const margin = { top: 50, bottom: 50, left: 50, right: 50 };
-    
+    const [value, setValue] = useState(data);
+    //hardcode 10 random colors for the clusters
+    const clusterColors = ["#cf7efd", "#7efdcf", "#7e9efd", "#fd7e7e", "#5e20b2", "#df6cc2" ,"#af4e35", "#87693b", "#30b54a", "#b5b5b5"]
 
     useEffect(() => {
 
         let transform;
         const xScale = scaleLinear()
-                      .domain(extent(data.map(d => d.coordinates.x)))
+                      .domain([min(data.map(d => d.coordinates.x)), max(data.map(d => d.coordinates.x))])
                       .range([margin.left, width - margin.right])
                       //.nice()
 
         const yScale = scaleLinear()
-                      .domain(extent(data.map(d => d.coordinates.y)))
+                      .domain([min(data.map(d => d.coordinates.y)), max(data.map(d => d.coordinates.y))])
                       .range([height - margin.bottom, margin.top])
                       //.nice()
-
-        const delaunay = d3.Delaunay.from(data, d => xScale(d.coordinates.x), d => yScale(d.coordinates.y));
         
         const xAxis = axisBottom(xScale).tickValues(xScale.ticks(10));
         const yAxis = axisLeft(yScale).tickValues(yScale.ticks(10));
@@ -32,14 +36,98 @@ const DGraph = ({data}) => {
         const svg = select(svgRef.current);
         const div = select(divRef.current);
 
+        const appendPoints = (data) =>{
+
+            svg.selectAll(".graph").remove();
+
+            svg.append("g").attr("class", "graph")
+            .selectAll(".coordinate")
+            .data(data)
+            .join('circle')
+            .attr("class", 'coordinate')
+            .attr("cx", d => xScale(d.coordinates.x) )
+            .attr("cy", d => yScale(d.coordinates.y) )
+            .attr("r", 3)
+            .attr("fill", (d) => clusterColors[d.cluster])
+            .on("mouseover", function(d, i) {
+                div.transition()
+                .duration(100)
+                .style("opacity", 1);
+    
+                div.selectAll("text").remove();
+                div.selectAll("br").remove();
+                div
+                .append("text")
+                .attr("class", "content")
+                .attr("font-size", "180%")
+                .attr("font-family", "Times New Roman")
+                .text("Population Equality = " + i.data["Population Equality"])
+    
+                div.append("br")
+    
+                div
+                .append("text")
+                .attr("class", "content2")
+                .attr("font-size", "180%")
+                .attr("font-family", "Times New Roman")
+                .text("Polsby Popper " + i.data["Polsby Popper"])
+             })
+    
+            .on("mouseout", function(d) {
+                div.transition()
+                .duration('200')
+                .style("opacity", 0);
+            });
+            
+        }
 
         const zoom = d3.zoom()
-            .extent([[0, 0], [width, height]])
-            .scaleExtent([1, 20])
+            .extent([[50, 50], [width-50, height-50]])
+            .scaleExtent([1, 100])
             .on("zoom", e => {  
+            //console.log(yScale.domain())
+
+            //finding domain values so that we can use them to find new points to apply kmeans clustering
+            let leftAxis = d3.axisLeft(yScale).scale(e.transform.rescaleY(yScale));
+            let downAxis = d3.axisBottom(xScale).scale(e.transform.rescaleX(xScale));
+
+            let newYDomain = leftAxis.scale().domain();
+            let newXDomain = downAxis.scale().domain();
+            
+            //xAxis.call(d3.axisBottom(xScale).scale(d3.event.transform.rescaleX(xScale)));
+            //yAxis.call(d3.axisLeft(yScale).scale(d3.event.transform.rescaleY(yScale)))
+
+            refreshGraph(newXDomain, newYDomain);
             svg.selectAll(".graph").attr("transform", (transform = e.transform));
             svg.selectAll(".graph").selectAll(".coordinate").attr("r", 3 / Math.sqrt(transform.k));
-          });
+                     
+
+        });
+
+          const refreshGraph = (newXDomain, newYDomain) => {
+            
+            //finding new points to apply kmeans clustering
+            let newData = data.map((d, i) => { if(d.coordinates.x >= newXDomain[0] && d.coordinates.x <= newXDomain[1] && d.coordinates.y >= newYDomain[0] && d.coordinates.y <= newYDomain[1]) {return d} })
+            newData = newData.filter(d => d !== undefined)
+            
+            //finding coordinates of the new points
+            let coordinateCopy = newData.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
+            
+            //finding number of previous circles
+            const numberOfPrevCircle = svg.selectAll(".graph").selectAll(".coordinate").size();
+            
+            if(Math.abs(numberOfPrevCircle - newData.length) < 10) return;
+            if(newData.length < numberOfClusters) return; 
+
+            //applying kmeans clustering
+            const { clusters } = kmeans(coordinateCopy, numberOfClusters);
+            newData.forEach((d, i) => {
+                d.cluster = clusters[i]
+            })
+
+            appendPoints(newData);
+            
+        }
 
         div.select("tooltip")
         .style("opacity", 0);
@@ -48,7 +136,7 @@ const DGraph = ({data}) => {
            .attr('height', height - margin.top - margin.bottom)
            .attr("viewBox", [0, 0, width, height]);
 
-       // svg.attr("overflow", "visible");
+       //svg.attr("overflow", "visible");
         // svg
         // .select(".x-axis")
         // .attr("transform", `translate(0,${height - margin.bottom})`)
@@ -86,55 +174,10 @@ const DGraph = ({data}) => {
 
         svg.call(zoom)
         .call(zoom.transform, d3.zoomIdentity)
-        .on("pointermove", event => {
-            // const p = transform.invert(d3.pointer(event));
-            // const i = delaunay.find(...p);
-            //svg.selectAll(".graph").select(".coordinate").classed("highlighted", (_, j) => i === j);
-            //svg.selectAll(".graph").select(".coordinate").select(coordinate.nodes()[i]).raise();
-          }).node();
+        .transition()
+        .duration(750)
           
-        svg.select(".graph").remove();
-        
-        svg.append("g").attr("class", "graph")
-        .selectAll(".coordinate")
-        .data(data)
-        .join('circle')
-        .attr("class", 'coordinate')
-        .attr("cx", d => xScale(d.coordinates.x) )
-        .attr("cy", d => yScale(d.coordinates.y) )
-        .attr("r", 3)
-        .attr("fill", "#00008B")
-        .on("mouseover", function(d, i) {
-            div.transition()
-            .duration(100)
-            .style("opacity", 1);
-
-            div.selectAll("text").remove();
-            div.selectAll("br").remove();
-            div
-            .append("text")
-            .attr("class", "content")
-            .attr("font-size", "180%")
-            .attr("font-family", "Times New Roman")
-            .text("Population Equality = " + i.data["Population Equality"])
-
-            div.append("br")
-
-            div
-            .append("text")
-            .attr("class", "content2")
-            .attr("font-size", "180%")
-            .attr("font-family", "Times New Roman")
-            .text("Polsby Popper " + i.data["Polsby Popper"])
-         })
-
-        .on("mouseout", function(d) {
-            div.transition()
-            .duration('200')
-            .style("opacity", 0);
-        });
-        
-        
+        appendPoints(data);
 
         // svg
         //   .select(".y-axis")
@@ -159,10 +202,7 @@ const DGraph = ({data}) => {
         .attr("font-family", "Serif")
         .text("Scatter Plotttt");
 
-    }, [])
-
-
-
+    }, [numberOfClusters])
 
     return(
         <div>
@@ -170,7 +210,7 @@ const DGraph = ({data}) => {
                 <g className = "x-axis" />
                 <g className = "y-axis" />
             </svg>
-           <div ref={divRef} className="tooltip"></div>
+           <div ref={divRef} className = "tooltip"></div>
         </div>
     )
 };
