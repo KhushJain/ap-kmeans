@@ -5,7 +5,8 @@ import Graph from './components/Graph';
 import ClusterPlot from './components/ClusterPlot';
 import DGraph from './components/DGraph';
 import DClusterGraph from './components/DClusterGraph';
-//import RawPositioning from './RawPositioning.js'
+import RawPositioning from './RawPositioning.js'
+
 // import Radviz from './RadvizSTD.js'
 //import 'rc-slider/assets/index.css';
 
@@ -28,7 +29,10 @@ export default function AppSTD() {
 	}
 
 	const applyClustering = (coordinateCopy, dataCopy , n) => {
+
+		//console.log(coordinateCopy)
 		const { clusters } = kmeans(coordinateCopy, n);
+		//console.log(kmeans(coordinateCopy, n));
 		dataCopy.forEach((d, i) => {
 			d.cluster = clusters[i]
 		})
@@ -51,23 +55,33 @@ export default function AppSTD() {
 		'Population Equality': 350
 	})
 
+	
 	useEffect(() => {
 		
 		const loadData = async () => {
-			let res = await axios('./Data/postmapping.json')
+			let res = await axios('./Data/premapping.json')
 			let data = res.data.map((d, i) => ({key: i, ...d}))
-			setRawData(data)
-			//getting all the values of x and y coordinates
-			const temp = data.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
-			setCoordinates(temp)
 
+			let { points, labels, std } = RawPositioning(data, labelMapping, labelAngles, 'key')
+			//console.log(RawPositioning(data, labelMapping, labelAngles, 'key'))
+		
+
+			setRawData(points)
+
+			//getting all the values of x and y coordinates
+			let temp = points.map((d, i) => ([d.coordinates.x, d.coordinates.y]))
+
+			setCoordinates(temp)
+			
 			//kmeans clustering
-			applyClustering(temp, data, 10)
+			applyClustering(temp, points, 10)
 		}
 
-		loadData().catch(err => console.log(err))
+		loadData().catch(err => console.log("errpr" + err))
+
 		
 	}, [])
+
 
 	
 	// useEffect(() => {
@@ -103,10 +117,10 @@ export default function AppSTD() {
 			</div> */}
 			<label>Clusters</label>
 			<input type="number" id="Cluster" name="Cluster" value={numberOfClusters} onChange = {handleChange}></input>
-			{rawData.length > 0 && <Graph data={rawData} coordinates={coordinates} />}
+			{processedData.length > 0 && <Graph data={processedData} coordinates={coordinates} />}
 			{processedData.length > 0 && <ClusterPlot data={processedData} coordinates={coordinates} />}
 			{processedData.length > 0 && <DClusterGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} applyClustering={applyClustering} setNumberOfClusters={setNumberOfClusters} />}
-			{rawData.length > 0 && <DGraph data={rawData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
+			{processedData.length > 0 && <DGraph data={processedData} coordinates={coordinates} numberOfClusters={numberOfClusters} />}
 		</div >
 	);
 }
